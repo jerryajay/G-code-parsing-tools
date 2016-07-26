@@ -1,6 +1,6 @@
 '''
 A naive parser to display energy consumption information of a G-code file
-with no power-gating and aggressive power-gating
+with no power-gating
 '''
 
 import re
