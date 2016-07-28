@@ -119,7 +119,10 @@ def powergating_in_chunks(X_list, Y_list):
     global NEIGHBORHOOD_THRESHOLD
 
     # Processing X-list
-    transient_value = X_list[1]
+    try:
+        transient_value = X_list[1]
+    except:
+        return
 
     can_Y_be_power_gated = True
 
