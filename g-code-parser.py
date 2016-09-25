@@ -136,7 +136,7 @@ def process_gcode_file(filename):
     results.append(total_Y_gcode_in_optimizable_lines)
     results.append(percentage_optimizable_y)
 
-    with open('/home/jerryant/Desktop/g-code-stats.csv', 'a+') as f:
+    with open('/home/jerryant/Desktop/g-code-infill-concentric-files-stats.csv', 'a+') as f:
         writer = csv.writer(f, dialect='excel')
         writer.writerow(results)
 
@@ -163,14 +163,14 @@ def init_csv_file():
     heading.append('No. of optimizable Y g-codes')
     heading.append('Percentage of optimizable Y g-codes to total extrusion movements')
 
-    with open('/home/jerryant/Desktop/g-code-stats.csv', 'w') as f:
+    with open('/home/jerryant/Desktop/g-code-infill-concentric-files-stats.csv', 'w') as f:
         writer = csv.writer(f, dialect='excel')
         writer.writerow(heading)
 
 if __name__ == "__main__":
 
 
-    path_gcode = "/home/jerryant/Desktop/Gcode-files/"
+    path_gcode = "/home/jerryant/Desktop/Gcode-infill-concentric-files/"
 
     init_csv_file()
 
