@@ -1,17 +1,19 @@
-import matplotlib.pyplot as plt
-import numpy as np
-from operator import add
+'''
+A naive parser to display energy consumption information of a G-code file
+with aggressive power-gating
+i.e., with a small neighbourhood threshold. (0.5)
+'''
 
-import os
 import re
+import os
+import csv
 
 TIME_TO_PRINT = 0
+FILAMENT_CONSUMPTION = 0
+
 TOTAL_MOVEMENTS = 0
+
 TOTAL_ELECTRICITY_COST = 0
-
-
-original_g_code_size = []
-
 
 def preprocess_lines(f):
     for l in f:
@@ -33,7 +35,6 @@ def preprocess_lines(f):
                     yield_line = False
             if yield_line:
                 yield line
-
 
 def electricity_cost_calculator(filename):
     f_1800_extrude_count = 0
@@ -111,15 +112,26 @@ def electricity_cost_calculator(filename):
     TOTAL_ELECTRICITY_COST = power_consumption_in_kWh * cost_of_electricity_for_one_kwh * time_to_print_in_hours
 
 
+
+def init_csv_file():
+    heading = []
+
+    heading.append('Filename')
+    heading.append('Original Electricity Cost ($)')
+    heading.append('Aggressive Electricity Cost ($)')
+    heading.append('Percentage savings')
+
+    with open('/home/jerryant/Desktop/electricity-cost-aggressive-stats.csv', 'w') as f:
+        writer = csv.writer(f, dialect='excel')
+        writer.writerow(heading)
+
+
 def aggressive_power_gating_calculator(filename):
 
 
     global TOTAL_MOVEMENTS
-    global original_g_code_size
-#    if TOTAL_MOVEMENTS == 0:
-#        return
-
-    original_g_code_size.append(TOTAL_MOVEMENTS)
+    if TOTAL_MOVEMENTS == 0:
+        return
 
     results = []
     g_code_contents = []
@@ -129,7 +141,6 @@ def aggressive_power_gating_calculator(filename):
     with open(filename) as f:
         for line in preprocess_lines(f):
             g_code_contents.append(line)
-
 
     extrution = [s for s in g_code_contents if "G1" in s]
 
@@ -199,103 +210,52 @@ def aggressive_power_gating_calculator(filename):
 
     time_to_print = float(TIME_TO_PRINT[0])
 
-    return (total_groupable_X_count+total_groupable_Y_count)*2
+    y_turn_off_time = (float(total_groupable_X_count)/TOTAL_MOVEMENTS) * time_to_print
+    x_turn_off_time = (float(total_groupable_Y_count)/TOTAL_MOVEMENTS) * time_to_print
 
-#    global time_concentric
-#    global time_grid
-#    global time_lines
-#    global time_triangles
-#
-#    if 'lines' in filename:
-#        time_lines.append(time_to_print)
-#    if 'grid' in filename:
-#        time_grid.append(time_to_print)
-#    if 'concentric' in filename:
-#        time_concentric.append(time_to_print)
-#    if 'triangles' in filename:
-#        time_triangles.append(time_to_print)
-#
-#
-#    y_turn_off_time = (float(total_groupable_X_count)/TOTAL_MOVEMENTS) * time_to_print
-#    x_turn_off_time = (float(total_groupable_Y_count)/TOTAL_MOVEMENTS) * time_to_print
-#
-#    time_for_actual_movements = time_to_print-y_turn_off_time-x_turn_off_time
-#    #time_for_actual_movements = time_for_actual_movements/(60*60)       #Converting to hours
-#
-#    return (time_to_print-time_for_actual_movements)/time_to_print
+    time_for_actual_movements = time_to_print-y_turn_off_time-x_turn_off_time
+    time_for_actual_movements = time_for_actual_movements/(60*60)       #Converting to hours
 
-    #calculate_electricity_cost(filename, time_for_actual_movements)
+    calculate_electricity_cost(filename, time_for_actual_movements)
 
+
+def calculate_electricity_cost(filename, time_for_actual_movements):
+    global TOTAL_ELECTRICITY_COST
+    global TIME_TO_PRINT
+
+    time_to_print = float(TIME_TO_PRINT[0])/(60*60)
+    cost_of_electricity_for_one_kwh = 0.15
+    single_motor_power_f_1800_extrude = 12.53
+
+    power_consumption_in_time_difference = single_motor_power_f_1800_extrude * (time_to_print-time_for_actual_movements)   #Units in Wh
+    power_consumption_in_time_difference_in_kwh = power_consumption_in_time_difference / 1000
+    electricity_cost_during_the_difference_time = (cost_of_electricity_for_one_kwh * power_consumption_in_time_difference_in_kwh)
+
+    electricity_cost_after_power_gating = TOTAL_ELECTRICITY_COST-electricity_cost_during_the_difference_time
+
+    percentage_savings_in_electricity = ((TOTAL_ELECTRICITY_COST-electricity_cost_after_power_gating)/TOTAL_ELECTRICITY_COST)*100
+
+
+    results = []
+    results.append(filename)
+    results.append(TOTAL_ELECTRICITY_COST)
+    results.append(electricity_cost_after_power_gating)
+    results.append(percentage_savings_in_electricity)
+
+
+    with open('/home/jerryant/Desktop/electricity-cost-aggressive-stats.csv', 'a+') as f:
+        writer = csv.writer(f, dialect='excel')
+        writer.writerow(results)
 
 if __name__ == '__main__':
 
+    path_gcode = "/home/jerryant/Desktop/Gcode-files/"
 
-    models = []
-    power_gating_additional_code = []
-
-    path_gcode = "/home/jerryant/Desktop/G-code-impact/"
-
-    idx = 1
+    init_csv_file()
 
     for filename in os.listdir(path_gcode):
-        idx = idx +1
-        if idx == 100:
-            break
-        else:
-            models.append(filename)
-            electricity_cost_calculator(path_gcode+filename)
-            power_gating_additional_code.append(aggressive_power_gating_calculator(path_gcode+filename))
+        print "Processing:", filename
+        electricity_cost_calculator(path_gcode+filename)
+        aggressive_power_gating_calculator(path_gcode+filename)
 
-    global original_g_code_size
-    print original_g_code_size
-    print models
-    print power_gating_additional_code
-
-    f = open("/home/jerryant/Desktop/Collection/original_g_code.csv", 'w')
-    for item in original_g_code_size:
-        f.write("%s\n" % item)
-    f = open("/home/jerryant/Desktop/Collection/models.csv", 'w')
-    for item in models:
-        f.write("%s\n" % item)
-    f = open("/home/jerryant/Desktop/Collection/power_gating_addition.csv", 'w')
-    for item in power_gating_additional_code:
-        f.write("%s\n" % item)
-
-
-
-#    models = ['HINGE', '3DPUZZLE', 'CUP-HOLDER', 'WHISTLE', 'IPHONE5-COVER', 'GEAR']
-#    original_g_code_size = [166375, 110794, 559705, 57782, 119352, 62463]
-#    power_gating_additional_code =  [12670, 13266, 45176, 1988, 7206, 13180]
-#
-#    new_gcode_size = map(add, original_g_code_size, power_gating_additional_code)
-#
-#    fig, ax = plt.subplots()
-#
-#    ax.spines['right'].set_visible(False)
-#    ax.spines['top'].set_visible(False)
-#
-#
-#    ax.yaxis.set_ticks_position('left')
-#    ax.xaxis.set_ticks_position('bottom')
-#
-#    plt.rc('font', family='Times New Roman Bold')
-#    plt.rcParams['font.size'] = 20
-#    plt.rcParams['font.weight'] = 'bold'
-#    plt.xticks(rotation=20)
-#
-#    w = 0.2
-#
-#    x_pos = np.arange(len(models))
-#
-#    bar1 = ax.bar(x_pos, original_g_code_size, width=w, color='#C44440', clip_on='True', hatch='/', label='Original File Size')
-#    bar2 = ax.bar(x_pos+w, new_gcode_size, width=w, color='#6666FF', clip_on='True', hatch='++', label='Extended File Size')
-#
-#    plt.ylabel('# of instrs. in G-code file', fontname='Times New Roman Bold', fontweight='bold', fontsize=23)
-#
-#    plt.xticks(x_pos, models, fontsize=15, fontweight='bold', fontname='Times New Roman Bold')
-#    plt.yticks(fontweight='bold', fontname='Times New Roman Bold')
-#
-#    plt.legend(frameon=False, fontsize=20)
-#
-#    plt.show()
-
+    print "Completely Done."

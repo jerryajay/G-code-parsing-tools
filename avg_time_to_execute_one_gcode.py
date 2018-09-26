@@ -27,6 +27,7 @@ def g_code_stats_calculator(filename):
     if time_to_print == 0:
         return
 
+    # Average time to print one G-code.
     time_for_one_gcode = time_to_print/number_of_gcodes
 
     results.append(number_of_gcodes)

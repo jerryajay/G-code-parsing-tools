@@ -1,5 +1,5 @@
 '''
-    Script to identify the optimium chunk size to increase the maximum motor turn-off time.
+    Script to identify the optimium chunk size to maximize the motor turn-off time.
 '''
 
 import re
