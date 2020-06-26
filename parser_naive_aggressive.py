@@ -48,13 +48,10 @@ def electricity_cost_calculator(filename):
 
     with open(filename) as f:
         for line in preprocess_lines(f):
-
             if 'G0' in line:
                 is_in_printing = False
-
             if 'G1' in line:
                 is_in_printing = True
-
             if is_in_printing:
                 if is_in_f1800_flag:
                     f_1800_extrude_count += 1
@@ -65,7 +62,6 @@ def electricity_cost_calculator(filename):
                     is_in_f1800_flag = True
                 elif 'F7200' in line:
                     is_in_f1800_flag = False
-
             else:
                 if is_in_f1800_flag:
                     f_1800_align_count += 1
@@ -77,19 +73,16 @@ def electricity_cost_calculator(filename):
                 elif 'F7200' in line:
                     is_in_f1800_flag = False
 
-
     global TOTAL_MOVEMENTS
     TOTAL_MOVEMENTS = f_1800_extrude_count + f_7200_extrude_count + f_1800_align_count + f_7200_align_count
     if TOTAL_MOVEMENTS == 0:
         return
-
 
     ratio_f_1800_extrude_count = float(f_1800_extrude_count)/TOTAL_MOVEMENTS
     ratio_f_7200_extrude_count = float(f_7200_extrude_count)/TOTAL_MOVEMENTS
 
     ratio_f_1800_align_count = float(f_1800_align_count)/TOTAL_MOVEMENTS
     ratio_f_7200_align_count = float(f_7200_align_count)/TOTAL_MOVEMENTS
-
 
     power_f_1800_extrude = 24.53
     power_f_7200_extrude = 24.71
@@ -106,16 +99,12 @@ def electricity_cost_calculator(filename):
                                    (ratio_f_7200_align_count*power_f_7200_align)
                                ) * time_to_print_in_hours) /1000
 
-
     cost_of_electricity_for_one_kwh = 0.15
     global TOTAL_ELECTRICITY_COST
     TOTAL_ELECTRICITY_COST = power_consumption_in_kWh * cost_of_electricity_for_one_kwh * time_to_print_in_hours
 
-
-
 def init_csv_file():
     heading = []
-
     heading.append('Filename')
     heading.append('Original Electricity Cost ($)')
     heading.append('Aggressive Electricity Cost ($)')
@@ -127,8 +116,6 @@ def init_csv_file():
 
 
 def aggressive_power_gating_calculator(filename):
-
-
     global TOTAL_MOVEMENTS
     if TOTAL_MOVEMENTS == 0:
         return
@@ -137,15 +124,12 @@ def aggressive_power_gating_calculator(filename):
     g_code_contents = []
 
     results.append(filename)
-
     with open(filename) as f:
         for line in preprocess_lines(f):
             g_code_contents.append(line)
 
     extrution = [s for s in g_code_contents if "G1" in s]
-
     total_extrution = len(extrution)
-
     if total_extrution == 0:
         return
 
@@ -173,9 +157,7 @@ def aggressive_power_gating_calculator(filename):
                 transient_X_value = value
                 group = []
 
-
     X_groups = [x_group for x_group in X_groups if len(x_group)>=2]
-
 
     Y_in_extrution = [s for s in extrution if "Y" in s]
     Y_terms_in_extrution = []
@@ -218,7 +200,6 @@ def aggressive_power_gating_calculator(filename):
 
     calculate_electricity_cost(filename, time_for_actual_movements)
 
-
 def calculate_electricity_cost(filename, time_for_actual_movements):
     global TOTAL_ELECTRICITY_COST
     global TIME_TO_PRINT
@@ -235,13 +216,11 @@ def calculate_electricity_cost(filename, time_for_actual_movements):
 
     percentage_savings_in_electricity = ((TOTAL_ELECTRICITY_COST-electricity_cost_after_power_gating)/TOTAL_ELECTRICITY_COST)*100
 
-
     results = []
     results.append(filename)
     results.append(TOTAL_ELECTRICITY_COST)
     results.append(electricity_cost_after_power_gating)
     results.append(percentage_savings_in_electricity)
-
 
     with open('/home/jerryant/Desktop/electricity-cost-aggressive-stats.csv', 'a+') as f:
         writer = csv.writer(f, dialect='excel')
@@ -250,12 +229,9 @@ def calculate_electricity_cost(filename, time_for_actual_movements):
 if __name__ == '__main__':
 
     path_gcode = "/home/jerryant/Desktop/Gcode-files/"
-
     init_csv_file()
-
     for filename in os.listdir(path_gcode):
         print "Processing:", filename
         electricity_cost_calculator(path_gcode+filename)
         aggressive_power_gating_calculator(path_gcode+filename)
-
     print "Completely Done."

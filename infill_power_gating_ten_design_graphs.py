@@ -1,13 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
-
 import os
 import re
 
 TIME_TO_PRINT = 0
 TOTAL_MOVEMENTS = 0
 TOTAL_ELECTRICITY_COST = 0
-
 
 time_lines = []
 time_concentric = []
@@ -35,7 +33,6 @@ def preprocess_lines(f):
             if yield_line:
                 yield line
 
-
 def electricity_cost_calculator(filename):
     f_1800_extrude_count = 0
     f_7200_extrude_count = 0
@@ -48,48 +45,39 @@ def electricity_cost_calculator(filename):
 
     with open(filename) as f:
         for line in preprocess_lines(f):
-
             if 'G0' in line:
                 is_in_printing = False
-
             if 'G1' in line:
                 is_in_printing = True
-
             if is_in_printing:
                 if is_in_f1800_flag:
                     f_1800_extrude_count += 1
                 else:
                     f_7200_extrude_count += 1
-
                 if 'F1800' in line:
                     is_in_f1800_flag = True
                 elif 'F7200' in line:
                     is_in_f1800_flag = False
-
             else:
                 if is_in_f1800_flag:
                     f_1800_align_count += 1
                 else:
                     f_7200_align_count += 1
-
                 if 'F1800' in line:
                     is_in_f1800_flag = True
                 elif 'F7200' in line:
                     is_in_f1800_flag = False
-
 
     global TOTAL_MOVEMENTS
     TOTAL_MOVEMENTS = f_1800_extrude_count + f_7200_extrude_count + f_1800_align_count + f_7200_align_count
     if TOTAL_MOVEMENTS == 0:
         return
 
-
     ratio_f_1800_extrude_count = float(f_1800_extrude_count)/TOTAL_MOVEMENTS
     ratio_f_7200_extrude_count = float(f_7200_extrude_count)/TOTAL_MOVEMENTS
 
     ratio_f_1800_align_count = float(f_1800_align_count)/TOTAL_MOVEMENTS
     ratio_f_7200_align_count = float(f_7200_align_count)/TOTAL_MOVEMENTS
-
 
     power_f_1800_extrude = 24.53
     power_f_7200_extrude = 24.71
@@ -106,19 +94,12 @@ def electricity_cost_calculator(filename):
                                    (ratio_f_7200_align_count*power_f_7200_align)
                                ) * time_to_print_in_hours) /1000
 
-
     cost_of_electricity_for_one_kwh = 0.15
     global TOTAL_ELECTRICITY_COST
     TOTAL_ELECTRICITY_COST = power_consumption_in_kWh * cost_of_electricity_for_one_kwh * time_to_print_in_hours
 
-
 def aggressive_power_gating_calculator(filename):
-
-
     global TOTAL_MOVEMENTS
-#    if TOTAL_MOVEMENTS == 0:
-#        return
-
 
     results = []
     g_code_contents = []
@@ -129,9 +110,7 @@ def aggressive_power_gating_calculator(filename):
         for line in preprocess_lines(f):
             g_code_contents.append(line)
 
-
     extrution = [s for s in g_code_contents if "G1" in s]
-
     total_extrution = len(extrution)
 
     if total_extrution == 0:
@@ -161,9 +140,7 @@ def aggressive_power_gating_calculator(filename):
                 transient_X_value = value
                 group = []
 
-
     X_groups = [x_group for x_group in X_groups if len(x_group)>=2]
-
 
     Y_in_extrution = [s for s in extrution if "Y" in s]
     Y_terms_in_extrution = []
@@ -212,55 +189,17 @@ def aggressive_power_gating_calculator(filename):
     if 'triangles' in filename:
         time_triangles.append(time_to_print)
 
-
     y_turn_off_time = (float(total_groupable_X_count)/TOTAL_MOVEMENTS) * time_to_print
     x_turn_off_time = (float(total_groupable_Y_count)/TOTAL_MOVEMENTS) * time_to_print
 
     time_for_actual_movements = time_to_print-y_turn_off_time-x_turn_off_time
-    #time_for_actual_movements = time_for_actual_movements/(60*60)       #Converting to hours
 
     return (time_to_print-time_for_actual_movements)/time_to_print
 
-    #calculate_electricity_cost(filename, time_for_actual_movements)
 
 
 
 if __name__ == '__main__':
-
-#    models = []
-#    lines = []
-#    concentric = []
-#    grid = []
-#    triangles = []
-#
-#    path_gcode = "/home/jerryant/Desktop/Types-of-gcode/"
-#
-#    for dirname in os.listdir(path_gcode):
-#        models.append(dirname)
-#        for filename in os.listdir(path_gcode+dirname):
-#            if 'lines' in filename:
-#                electricity_cost_calculator(path_gcode+dirname+'/'+filename)
-#                lines.append(aggressive_power_gating_calculator(path_gcode+dirname+'/'+filename))
-#            if 'concentric' in filename:
-#                electricity_cost_calculator(path_gcode+dirname+'/'+filename)
-#                concentric.append(aggressive_power_gating_calculator(path_gcode+dirname+'/'+filename))
-#            if 'grid' in filename:
-#                electricity_cost_calculator(path_gcode+dirname+'/'+filename)
-#                grid.append(aggressive_power_gating_calculator(path_gcode+dirname+'/'+filename))
-#            if 'triangles' in filename:
-#                electricity_cost_calculator(path_gcode+dirname+'/'+filename)
-#                triangles.append(aggressive_power_gating_calculator(path_gcode+dirname+'/'+filename))
-#
-#    print models
-#    print lines
-#    print time_lines
-#    print concentric
-#    print time_concentric
-#    print grid
-#    print time_grid
-#    print triangles
-#    print time_triangles
-
     models = ['HINGE', '3DPUZZLE', 'CUP-HOLDER', 'WHISTLE', 'IPHONE5-COVER', 'GEAR']
 
     lines = [0.03807663410969204, 0.059867862880661364, 0.04035697376296439, 0.017202589041569943,
@@ -289,7 +228,6 @@ if __name__ == '__main__':
     energy_grid = [g*39 for g in time_grid]
     energy_triangles = [t*39 for t in time_triangles]
 
-
     vector_lines = np.array(lines)
     vector_lines_energy = np.array(energy_lines)
     old_energy_lines = (vector_lines*vector_lines_energy) + vector_lines_energy
@@ -317,7 +255,6 @@ if __name__ == '__main__':
     old_energy_concentric = np.array(old_energy_concentric)
     concentric_percent_savings = (old_energy_concentric-vector_concentric_energy)/old_energy_concentric
 
-
     vector_triangles = np.array(triangles)
     vector_triangles_energy = np.array(energy_triangles)
     old_energy_triangles = (vector_triangles*vector_triangles_energy) + vector_triangles_energy
@@ -327,21 +264,8 @@ if __name__ == '__main__':
     old_energy_triangles = np.array(old_energy_triangles)
     triangles_percent_savings = (old_energy_triangles-vector_triangles_energy)/old_energy_triangles
 
-#
-#
-##    print lines
-##    print time_lines
-##    print concentric
-##    print time_concentric
-##    print grid
-##    print time_grid
-##    print triangles
-##    print time_triangles
-#
     fig, ax = plt.subplots()
-
     plt.rc('font', family='Times New Roman Bold')
-
     plt.rcParams['font.size'] = 20
     plt.rcParams['font.weight'] = 'bold'
     plt.xticks(rotation=10)
@@ -370,9 +294,7 @@ if __name__ == '__main__':
     ax.set_ylim([0, 1320])
 
     ax.set_ylabel('Energy Consump. (KJ)', fontname="Times New Roman Bold", fontsize=20, fontweight='bold')
-
     ax.legend(loc='best', fontsize=20)
-
 
     ind = -1
     for rect in bar1:
@@ -381,7 +303,6 @@ if __name__ == '__main__':
         ax.text(rect.get_x() + rect.get_width()/2., 1.05*height,
                 '%.0f' % float(lines_percent_savings[ind]*100)+'%',
                 ha='center', va='bottom', fontsize=13, fontweight='bold')
-
 
     ind = -1
     for rect in bar2:
@@ -399,7 +320,6 @@ if __name__ == '__main__':
                 '%.0f' % float(triangles_percent_savings[ind]*100)+'%',
                 ha='center', va='bottom', fontsize=13, fontweight='bold')
 
-
     ind = -1
     for rect in bar4:
         ind = ind + 1
@@ -410,5 +330,3 @@ if __name__ == '__main__':
 
     plt.subplots_adjust(bottom=0.2)
     plt.show()
-
-    #print lines_percent_savings[3], concentric_percent_savings[3], triangles_percent_savings[3], grid_percent_savings[3]

@@ -9,9 +9,7 @@ TIME_TO_PRINT = 0
 TOTAL_MOVEMENTS = 0
 TOTAL_ELECTRICITY_COST = 0
 
-
 original_g_code_size = []
-
 
 def preprocess_lines(f):
     for l in f:
@@ -34,7 +32,6 @@ def preprocess_lines(f):
             if yield_line:
                 yield line
 
-
 def electricity_cost_calculator(filename):
     f_1800_extrude_count = 0
     f_7200_extrude_count = 0
@@ -47,41 +44,33 @@ def electricity_cost_calculator(filename):
 
     with open(filename) as f:
         for line in preprocess_lines(f):
-
             if 'G0' in line:
                 is_in_printing = False
-
             if 'G1' in line:
                 is_in_printing = True
-
             if is_in_printing:
                 if is_in_f1800_flag:
                     f_1800_extrude_count += 1
                 else:
                     f_7200_extrude_count += 1
-
                 if 'F1800' in line:
                     is_in_f1800_flag = True
                 elif 'F7200' in line:
                     is_in_f1800_flag = False
-
             else:
                 if is_in_f1800_flag:
                     f_1800_align_count += 1
                 else:
                     f_7200_align_count += 1
-
                 if 'F1800' in line:
                     is_in_f1800_flag = True
                 elif 'F7200' in line:
                     is_in_f1800_flag = False
 
-
     global TOTAL_MOVEMENTS
     TOTAL_MOVEMENTS = f_1800_extrude_count + f_7200_extrude_count + f_1800_align_count + f_7200_align_count
     if TOTAL_MOVEMENTS == 0:
         return
-
 
     ratio_f_1800_extrude_count = float(f_1800_extrude_count)/TOTAL_MOVEMENTS
     ratio_f_7200_extrude_count = float(f_7200_extrude_count)/TOTAL_MOVEMENTS
@@ -112,12 +101,8 @@ def electricity_cost_calculator(filename):
 
 
 def aggressive_power_gating_calculator(filename):
-
-
     global TOTAL_MOVEMENTS
     global original_g_code_size
-#    if TOTAL_MOVEMENTS == 0:
-#        return
 
     original_g_code_size.append(TOTAL_MOVEMENTS)
 
@@ -130,11 +115,8 @@ def aggressive_power_gating_calculator(filename):
         for line in preprocess_lines(f):
             g_code_contents.append(line)
 
-
     extrution = [s for s in g_code_contents if "G1" in s]
-
     total_extrution = len(extrution)
-
     if total_extrution == 0:
         return
 
@@ -162,10 +144,7 @@ def aggressive_power_gating_calculator(filename):
                 transient_X_value = value
                 group = []
 
-
     X_groups = [x_group for x_group in X_groups if len(x_group)>=2]
-
-
     Y_in_extrution = [s for s in extrution if "Y" in s]
     Y_terms_in_extrution = []
     for line in Y_in_extrution:
@@ -201,40 +180,12 @@ def aggressive_power_gating_calculator(filename):
 
     return (total_groupable_X_count+total_groupable_Y_count)*2
 
-#    global time_concentric
-#    global time_grid
-#    global time_lines
-#    global time_triangles
-#
-#    if 'lines' in filename:
-#        time_lines.append(time_to_print)
-#    if 'grid' in filename:
-#        time_grid.append(time_to_print)
-#    if 'concentric' in filename:
-#        time_concentric.append(time_to_print)
-#    if 'triangles' in filename:
-#        time_triangles.append(time_to_print)
-#
-#
-#    y_turn_off_time = (float(total_groupable_X_count)/TOTAL_MOVEMENTS) * time_to_print
-#    x_turn_off_time = (float(total_groupable_Y_count)/TOTAL_MOVEMENTS) * time_to_print
-#
-#    time_for_actual_movements = time_to_print-y_turn_off_time-x_turn_off_time
-#    #time_for_actual_movements = time_for_actual_movements/(60*60)       #Converting to hours
-#
-#    return (time_to_print-time_for_actual_movements)/time_to_print
-
-    #calculate_electricity_cost(filename, time_for_actual_movements)
-
 
 if __name__ == '__main__':
-
-
     models = []
     power_gating_additional_code = []
 
     path_gcode = "/home/jerryant/Desktop/G-code-impact/"
-
     idx = 1
 
     for filename in os.listdir(path_gcode):
@@ -261,7 +212,7 @@ if __name__ == '__main__':
     for item in power_gating_additional_code:
         f.write("%s\n" % item)
 
-
+#### START: Plotting code. Uncomment and use as necessary.
 
 #    models = ['HINGE', '3DPUZZLE', 'CUP-HOLDER', 'WHISTLE', 'IPHONE5-COVER', 'GEAR']
 #    original_g_code_size = [166375, 110794, 559705, 57782, 119352, 62463]
@@ -299,3 +250,4 @@ if __name__ == '__main__':
 #
 #    plt.show()
 
+#### END: Plotting code.

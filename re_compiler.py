@@ -1,8 +1,5 @@
 def Gcode_recompiler(filename):
-
-  #Setting neighborhood threshold to be 0.5
   neighborhood_threshold = 0.5
-
   extrution = \
     [s for s in g_code_contents if "G1" in s]
   X_in_extrution = \
@@ -23,6 +20,4 @@ def Gcode_recompiler(filename):
      for x_group in X_groups
      if len(x_group)>=2]
 
-  #Similar methodology for Y
-
-  return groupable_X, groupable_Y
+  return groupable_X

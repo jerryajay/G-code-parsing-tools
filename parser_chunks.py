@@ -33,20 +33,15 @@ def preprocess_lines(f):
             if yield_line:
                 yield line
 
-
 def chunk_size_optimization_calculator(filename):
-
     global CHUNK_SIZE
-
     results = []
-
     results.append(filename)
 
     for CHUNK_SIZE in range(4, 21):
         chunks = []
         chunk = []
         counter = 0
-
         with open(filename) as f:
             for line in preprocess_lines(f):
                 if counter == CHUNK_SIZE:
@@ -59,7 +54,6 @@ def chunk_size_optimization_calculator(filename):
                 counter += 1
 
         power_gating_stats = []
-
 
         for chunk in chunks:
             power_gating_stats.append(process_chunk(chunk))
@@ -77,7 +71,6 @@ def chunk_size_optimization_calculator(filename):
         percentage_of_turn_off_time = ratio_of_optimization * 100
         results.append(percentage_of_turn_off_time)
 
-
     with open('/home/jerryant/Desktop/g-code-varying-chunk-size-stats.csv', 'a+') as f:
         writer = csv.writer(f, dialect='excel')
         writer.writerow(results)
@@ -86,7 +79,6 @@ def chunk_size_optimization_calculator(filename):
 
 
 def process_power_gating_stats(power_gating_stats):
-
     X_off_time = 0
     Y_off_time = 0
 
@@ -100,7 +92,6 @@ def process_power_gating_stats(power_gating_stats):
 
 
 def process_chunk(chunk):
-
     X_term_list = []
     Y_term_list = []
 
@@ -115,7 +106,6 @@ def process_chunk(chunk):
 
 
 def powergating_in_chunks(X_list, Y_list):
-
     global NEIGHBORHOOD_THRESHOLD
 
     # Processing X-list
@@ -135,7 +125,6 @@ def powergating_in_chunks(X_list, Y_list):
 
     # Processing Y-list
     transient_value = Y_list[1]
-
     can_X_be_power_gated = True
 
     for value in Y_list:
@@ -143,7 +132,6 @@ def powergating_in_chunks(X_list, Y_list):
             transient_value =value
         else:
             can_X_be_power_gated = False
-
 
     result = []
     result.append(can_X_be_power_gated)
@@ -154,7 +142,6 @@ def powergating_in_chunks(X_list, Y_list):
 
 def init_csv_file():
     heading = []
-
     heading.append('Filename')
     heading.append('4')
     heading.append('5')
@@ -179,9 +166,7 @@ def init_csv_file():
         writer.writerow(heading)
 
 if __name__ == "__main__":
-
     path_gcode = "/home/jerryant/Desktop/Gcode-files/"
-
     init_csv_file()
 
     for filename in os.listdir(path_gcode):
